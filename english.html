@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Grammar Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 50%, #fce7f3 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #3b82f6, #ec4899);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(236, 72, 153, 0.4);
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #3b82f6, #ec4899);
+            transition: width 0.5s ease-out;
+        }
+
+        .feedback-correct {
+            animation: bounce 0.5s ease;
+            color: #059669;
+        }
+
+        .feedback-wrong {
+            animation: shake 0.4s ease;
+            color: #dc2626;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .step-badge {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+
+        .highlight-blue { color: #2563eb; font-weight: 600; }
+        .highlight-pink { color: #db2777; font-weight: 600; }
+        .highlight-purple { color: #9333ea; font-weight: 600; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app" class="max-w-4xl mx-auto">
+        <!-- Start Screen -->
+        <div id="start-screen" class="glass-card p-12 text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-pink-500">
+                English Grammar Master
+            </h1>
+            <p class="text-gray-600 text-lg mb-8">Nâng tầm ngữ pháp với "Used to" và "Connectors" qua các thử thách vui nhộn!</p>
+            <button onclick="game.start()" class="btn-primary text-white px-10 py-4 rounded-full text-xl font-bold">
+                BẮT ĐẦU HỌC 🚀
+            </button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="hidden">
+            <!-- Header Info -->
+            <div class="flex justify-between items-center mb-6 px-4">
+                <div>
+                    <span id="part-title" class="text-pink-600 font-bold text-sm uppercase tracking-widest">PHẦN 1: USED TO</span>
+                    <h2 id="question-number" class="text-2xl font-bold text-gray-800">Câu hỏi 1/10</h2>
+                </div>
+                <div class="text-right">
+                    <span class="text-gray-500 text-sm">Điểm số</span>
+                    <div id="score" class="text-2xl font-bold text-blue-600">0</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-bar mb-8 mx-4">
+                <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <!-- Question Card -->
+            <div class="glass-card p-8 mb-6">
+                <div class="mb-6">
+                    <p class="text-sm text-gray-500 mb-2">Đề bài:</p>
+                    <p id="original-sentence" class="text-xl text-gray-800 font-medium italic">"Anna had long hair when she was at school."</p>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm text-gray-500 mb-2">Câu viết lại của bạn:</label>
+                    <input type="text" id="user-input" 
+                        class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-pink-400 focus:outline-none text-lg transition-all"
+                        placeholder="Nhập câu trả lời tại đây..."
+                        autocomplete="off">
+                </div>
+
+                <div id="feedback" class="hidden text-center font-bold text-lg mb-4"></div>
+
+                <div class="flex gap-4">
+                    <button id="check-btn" onclick="game.checkAnswer()" class="btn-primary text-white flex-1 py-4 rounded-xl font-bold text-lg">
+                        CHECK ANSWER
+                    </button>
+                    <button id="next-btn" onclick="game.nextQuestion()" class="hidden bg-gray-800 text-white flex-1 py-4 rounded-xl font-bold text-lg hover:bg-black transition-all">
+                        CÂU TIẾP THEO ➔
+                    </button>
+                </div>
+            </div>
+
+            <!-- Detailed Explanation Card (Initially Hidden) -->
+            <div id="explanation-card" class="hidden glass-card p-8 border-t-4 border-blue-400 bg-blue-50/50">
+                <h3 class="text-xl font-bold text-blue-800 mb-4 flex items-center">
+                    <span class="mr-2">🧠</span> GIẢI THÍCH CHI TIẾT
+                </h3>
+                <div id="explanation-content" class="space-y-6 text-gray-700">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="hidden glass-card p-12 text-center">
+            <h2 class="text-4xl font-bold mb-4">Hoàn thành! 🎉</h2>
+            <div class="text-6xl font-bold text-pink-500 mb-6" id="final-score">0/30</div>
+            <p id="result-message" class="text-lg text-gray-600 mb-8 font-medium"></p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-green-100 p-4 rounded-xl">
+                    <span class="block text-green-600 font-bold">Số câu đúng</span>
+                    <span id="correct-count" class="text-2xl font-bold">0</span>
+                </div>
+                <div class="bg-red-100 p-4 rounded-xl">
+                    <span class="block text-red-600 font-bold">Số câu sai</span>
+                    <span id="wrong-count" class="text-2xl font-bold">0</span>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 p-6 rounded-2xl text-left mb-8">
+                <h4 class="font-bold text-blue-800 mb-2">💡 Gợi ý ôn tập:</h4>
+                <ul id="review-tips" class="list-disc list-inside text-gray-700 space-y-1">
+                    <!-- Tips based on performance -->
+                </ul>
+            </div>
+
+            <button onclick="location.reload()" class="btn-primary text-white px-10 py-4 rounded-full text-xl font-bold">
+                CHƠI LẠI TỪ ĐẦU
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            // PART 1: USED TO (1-10)
+            {
+                part: 1,
+                original: "Anna had long hair when she was at school.",
+                answer: "Anna used to have long hair when she was at school.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (had)", type: "Thói quen/Trạng thái trong quá khứ", s: "Anna", v: "had" },
+                    structure: "S + used to + V (nguyên mẫu)",
+                    steps: [
+                        "Xác định hành động 'had long hair' là trạng thái đã kết thúc.",
+                        "Thay 'had' (V2) thành 'used to have' (used to + V-inf).",
+                        "Giữ nguyên vế sau để giữ ngữ cảnh thời gian."
+                    ],
+                    tip: "Dùng 'Used to' để nhấn mạnh sự khác biệt giữa quá khứ và hiện tại."
+                }
+            },
+            {
+                part: 1,
+                original: "Mary didn't listen when her teachers were speaking.",
+                answer: "Mary didn't use to listen when her teachers were speaking.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn phủ định", type: "Thói quen xấu trong quá khứ", s: "Mary", v: "didn't listen" },
+                    structure: "S + didn't use to + V (không có 'd' ở use)",
+                    steps: [
+                        "Nhận diện phủ định 'didn't listen'.",
+                        "Chuyển sang cấu trúc phủ định: 'didn't use to listen'.",
+                        "Lưu ý: Khi có 'did', 'use' không còn đuôi 'd'."
+                    ],
+                    tip: "Cẩn thận! Nhiều người viết nhầm 'didn't used to' (thừa chữ d)."
+                }
+            },
+            {
+                part: 1,
+                original: "Ricardo got up at 6.00 when he was training for the Olympics.",
+                answer: "Ricardo used to get up at 6.00 when he was training for the Olympics.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (got up)", type: "Thói quen rèn luyện", s: "Ricardo", v: "get up" },
+                    structure: "S + used to + V",
+                    steps: ["Chuyển 'got up' về nguyên mẫu 'get up'.", "Thêm 'used to' phía trước."]
+                }
+            },
+            {
+                part: 1,
+                original: "What did you usually do on Saturday evenings?",
+                answer: "What did you use to do on Saturday evenings?",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (Nghi vấn)", type: "Câu hỏi thói quen", s: "you", v: "do" },
+                    structure: "Did + S + use to + V?",
+                    steps: ["Đây là câu hỏi, dùng trợ động từ 'did'.", "Thay 'usually do' (quá khứ) bằng 'use to do'."]
+                }
+            },
+            {
+                part: 1,
+                original: "Sophie was afraid of dogs when she was a little girl.",
+                answer: "Sophie used to be afraid of dogs when she was a little girl.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (was)", type: "Trạng thái tâm lý quá khứ", s: "Sophie", v: "be" },
+                    structure: "S + used to + be + Adj",
+                    steps: ["Động từ tobe 'was' chuyển về nguyên mẫu là 'be'.", "Viết thành 'used to be'."]
+                }
+            },
+            {
+                part: 1,
+                original: "We always gave our teachers presents at the end of term.",
+                answer: "We used to give our teachers presents at the end of term.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (gave)", type: "Thói quen thường xuyên", s: "We", v: "give" },
+                    structure: "S + used to + V",
+                    steps: ["Bỏ trạng từ 'always' vì 'used to' đã bao hàm nghĩa thường xuyên.", "Chuyển 'gave' về 'give'."]
+                }
+            },
+            {
+                part: 1,
+                original: "Did you live next door to Mrs. Harrison?",
+                answer: "Did you use to live next door to Mrs. Harrison?",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (Nghi vấn)", type: "Câu hỏi về trạng thái cư trú", s: "you", v: "live" },
+                    structure: "Did + S + use to + V?",
+                    steps: ["Thêm 'use to' vào sau chủ ngữ.", "Đảm bảo động từ 'live' ở dạng nguyên mẫu."]
+                }
+            },
+            {
+                part: 1,
+                original: "My brother wore glasses when he was young.",
+                answer: "My brother used to wear glasses when he was young.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (wore)", type: "Trạng thái/Thói quen", s: "My brother", v: "wear" },
+                    structure: "S + used to + wear",
+                    steps: ["Chuyển 'wore' (V2) thành 'wear' (V1).", "Thêm 'used to'."]
+                }
+            },
+            {
+                part: 1,
+                original: "I usually stayed up late to watch football matches last year, but now I don't.",
+                answer: "I used to stay up late to watch football matches last year.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn so sánh hiện tại", type: "Thói quen đã chấm dứt", s: "I", v: "stay up" },
+                    structure: "S + used to + V",
+                    steps: ["Bỏ vế 'but now I don't' vì 'used to' đã tự thể hiện điều đó.", "Chuyển 'stayed' thành 'stay'."]
+                }
+            },
+            {
+                part: 1,
+                original: "There were some trees in the field, but now there aren't any.",
+                answer: "There used to be some trees in the field.",
+                explanation: {
+                    analysis: { tense: "Quá khứ đơn (There were)", type: "Sự tồn tại trong quá khứ", s: "There", v: "be" },
+                    structure: "There used to be + N",
+                    steps: ["Chuyển 'were' thành 'be'.", "Bỏ vế phủ định ở hiện tại."]
+                }
+            },
+            // PART 2: CONNECTORS (11-30)
+            {
+                part: 2,
+                original: "Mary tried to keep calm although she was very disappointed.",
+                answer: "Mary tried to keep calm despite being very disappointed.",
+                explanation: {
+                    analysis: { type: "Mệnh đề tương phản (Although)", clause: "she was very disappointed" },
+                    structure: "Despite + V-ing",
+                    steps: ["Xác định cùng chủ ngữ (Mary & she).", "Chuyển 'was' thành 'being'.", "Viết lại: Despite being..."],
+                    tip: "Cũng có thể dùng danh từ: Despite her disappointment."
+                }
+            },
+            {
+                part: 2,
+                original: "Even though it was raining heavily, the explorers decided to continue their journey.",
+                answer: "In spite of the heavy rain, the explorers decided to continue their journey.",
+                explanation: {
+                    analysis: { type: "Mệnh đề tương phản", clause: "it was raining heavily" },
+                    structure: "In spite of + Noun Phrase",
+                    steps: ["Chuyển mệnh đề 'it was raining heavily' thành cụm danh từ 'the heavy rain'.", "Dùng In spite of ở đầu câu."],
+                    tip: "Cách dễ nhất là dùng V-ing: In spite of raining heavily."
+                }
+            },
+            {
+                part: 2,
+                original: "Despite his ability to do the job, he was not offered the position.",
+                answer: "Although he was able to do the job, he was not offered the position.",
+                explanation: {
+                    analysis: { type: "Cụm danh từ (Despite)", phrase: "his ability" },
+                    structure: "Although + S + V",
+                    steps: ["Chuyển danh từ 'ability' thành tính từ 'able'.", "Thêm chủ ngữ 'he' và động từ tobe 'was' phù hợp với vế sau."]
+                }
+            },
+            {
+                part: 2,
+                original: "He had worked very hard but he failed.",
+                answer: "Even though he had worked very hard, he failed.",
+                explanation: {
+                    analysis: { type: "Liên từ 'but'", s: "He", v: "had worked" },
+                    structure: "Even though + Clause",
+                    steps: ["Thay 'but' ở giữa bằng 'Even though' ở đầu.", "Lưu ý dấu phẩy giữa hai mệnh đề."]
+                }
+            },
+            {
+                part: 2,
+                original: "Although Tom was a poor student, he studied very well.",
+                answer: "In spite of being a poor student, he studied very well.",
+                explanation: {
+                    analysis: { type: "Cùng chủ ngữ (Tom & he)", phrase: "Tom was a poor student" },
+                    structure: "In spite of + V-ing",
+                    steps: ["Lấy động từ 'was' chuyển thành 'being'.", "In spite of being a poor student..."]
+                }
+            },
+            {
+                part: 2,
+                original: "Although he often tells lies, the headmaster believes him.",
+                answer: "In spite of often telling lies, the headmaster believes him.",
+                explanation: {
+                    analysis: { type: "Hành động tương phản", clause: "he often tells lies" },
+                    structure: "In spite of + V-ing",
+                    steps: ["Giữ trạng từ 'often'.", "Chuyển 'tells' thành 'telling'."]
+                }
+            },
+            {
+                part: 2,
+                original: "Although the weather was bad, she went to school on time.",
+                answer: "Despite the bad weather, she went to school on time.",
+                explanation: {
+                    analysis: { type: "Tính chất thời tiết", clause: "the weather was bad" },
+                    structure: "Despite + Noun Phrase",
+                    steps: ["Chuyển 'the weather was bad' thành cụm danh từ 'the bad weather'.", "Sử dụng cấu trúc: Adj + N."]
+                }
+            },
+            {
+                part: 2,
+                original: "My mother told me to go to school although I was sick.",
+                answer: "My mother told me to go to school in spite of my sickness.",
+                explanation: {
+                    analysis: { type: "Trạng thái sức khỏe", clause: "I was sick" },
+                    structure: "In spite of + Noun",
+                    steps: ["Chuyển tính từ 'sick' thành danh từ 'sickness'.", "Hoặc dùng V-ing: In spite of being sick."]
+                }
+            },
+            {
+                part: 2,
+                original: "Although there was a big storm, they decided to leave home.",
+                answer: "In spite of a big storm, they decided to leave home.",
+                explanation: {
+                    analysis: { type: "Sự tồn tại (there was)", clause: "there was a big storm" },
+                    structure: "In spite of + N",
+                    steps: ["Bỏ 'there was', giữ lại cụm danh từ chính 'a big storm'."]
+                }
+            },
+            {
+                part: 2,
+                original: "Tom was admitted to the university although his grades were bad.",
+                answer: "Tom was admitted to the university despite his bad grades.",
+                explanation: {
+                    analysis: { type: "Sở hữu + tính chất", clause: "his grades were bad" },
+                    structure: "Despite + Noun phrase",
+                    steps: ["Chuyển 'his grades were bad' thành 'his bad grades'."]
+                }
+            },
+            {
+                part: 2,
+                original: "Although she has a physical handicap, she has become a successful woman.",
+                answer: "Despite her physical handicap, she has become a successful woman.",
+                explanation: {
+                    analysis: { type: "Sở hữu", clause: "she has a physical handicap" },
+                    structure: "Despite + N",
+                    steps: ["Thay 'she has' thành tính từ sở hữu 'her'.", "Giữ lại cụm danh từ phía sau."]
+                }
+            },
+            {
+                part: 2,
+                original: "In spite of his good salary, Tom gave up his job.",
+                answer: "Although his salary was good, Tom gave up his job.",
+                explanation: {
+                    analysis: { type: "Cụm danh từ sang mệnh đề", phrase: "his good salary" },
+                    structure: "Although + S + V",
+                    steps: ["Tách cụm 'his good salary' thành S (his salary) + V (was good)."]
+                }
+            },
+            {
+                part: 2,
+                original: "Though he had not finished the paper, he went to sleep.",
+                answer: "In spite of not having finished the paper, he went to sleep.",
+                explanation: {
+                    analysis: { type: "Phủ định quá khứ hoàn thành", clause: "he had not finished" },
+                    structure: "In spite of + not + V-ing",
+                    steps: ["Dùng 'not' trước V-ing.", "Chuyển 'had' thành 'having'."]
+                }
+            },
+            {
+                part: 2,
+                original: "In spite of the high prices, my daughter insists on going to the movies.",
+                answer: "Even though the prices are high, my daughter insists on going to the movies.",
+                explanation: {
+                    analysis: { type: "Cụm danh từ sang mệnh đề", phrase: "the high prices" },
+                    structure: "Even though + S + V",
+                    steps: ["S (the prices) + V (are) + Adj (high)."]
+                }
+            },
+            {
+                part: 2,
+                original: "In spite of her dislike for coffee, she drank it to keep herself warm.",
+                answer: "Although she disliked coffee, she drank it to keep herself warm.",
+                explanation: {
+                    analysis: { type: "Danh từ sang Động từ", phrase: "her dislike" },
+                    structure: "Although + S + V",
+                    steps: ["Chuyển danh từ 'dislike' thành động từ 'disliked' (chia theo thì quá khứ của vế sau)."]
+                }
+            },
+            {
+                part: 2,
+                original: "He couldn't earn enough money for living although he worked hard.",
+                answer: "He couldn't earn enough money for living despite working hard.",
+                explanation: {
+                    analysis: { type: "Cùng chủ ngữ (He)", clause: "he worked hard" },
+                    structure: "Despite + V-ing",
+                    steps: ["Chuyển 'worked' thành 'working'."]
+                }
+            },
+            {
+                part: 2,
+                original: "Although Jane wrote for the tickets, she still had to stand in line.",
+                answer: "In spite of writing for the tickets, Jane still had to stand in line.",
+                explanation: {
+                    analysis: { type: "Cùng chủ ngữ (Jane)", clause: "Jane wrote" },
+                    structure: "In spite of + V-ing",
+                    steps: ["Chuyển 'wrote' thành 'writing'.", "Nhớ đưa tên riêng 'Jane' sang vế sau để rõ nghĩa."]
+                }
+            },
+            {
+                part: 2,
+                original: "We get a good room though we didn't phone the hotel.",
+                answer: "We get a good room despite not phoning the hotel.",
+                explanation: {
+                    analysis: { type: "Phủ định (didn't)", clause: "we didn't phone" },
+                    structure: "Despite + not + V-ing",
+                    steps: ["Dùng 'not' để giữ nghĩa phủ định.", "Chuyển 'phone' thành 'phoning'."]
+                }
+            },
+            {
+                part: 2,
+                original: "She was admitted to the university in spite of her low grades.",
+                answer: "She was admitted to the university although her grades were low.",
+                explanation: {
+                    analysis: { type: "Cụm danh từ sang mệnh đề", phrase: "her low grades" },
+                    structure: "Although + S + V",
+                    steps: ["Tạo câu: 'her grades' (S) + 'were' (V) + 'low' (Adj)."]
+                }
+            },
+            {
+                part: 2,
+                original: "Despite the terrible food, he still eats in that restaurant.",
+                answer: "Although the food is terrible, he still eats in that restaurant.",
+                explanation: {
+                    analysis: { type: "Cụm danh từ sang mệnh đề", phrase: "the terrible food" },
+                    structure: "Although + S + V",
+                    steps: ["Tạo câu: 'the food' (S) + 'is' (V) + 'terrible' (Adj)."]
+                }
+            }
+        ];
+
+        const game = {
+            currentIndex: 0,
+            score: 0,
+            correct: 0,
+            wrong: 0,
+
+            start() {
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('game-screen').classList.remove('hidden');
+                this.loadQuestion();
+            },
+
+            loadQuestion() {
+                const q = questions[this.currentIndex];
+                
+                // Update UI Header
+                document.getElementById('part-title').innerText = q.part === 1 ? "PHẦN 1: USED TO" : "PHẦN 2: CONNECTORS";
+                document.getElementById('question-number').innerText = `Câu hỏi ${this.currentIndex + 1}/${questions.length}`;
+                document.getElementById('original-sentence').innerText = `"${q.original}"`;
+                
+                // Progress
+                const progress = ((this.currentIndex) / questions.length) * 100;
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+
+                // Reset inputs and visibility
+                document.getElementById('user-input').value = "";
+                document.getElementById('user-input').disabled = false;
+                document.getElementById('feedback').classList.add('hidden');
+                document.getElementById('explanation-card').classList.add('hidden');
+                document.getElementById('check-btn').classList.remove('hidden');
+                document.getElementById('next-btn').classList.add('hidden');
+                document.getElementById('user-input').focus();
+            },
+
+            checkAnswer() {
+                const q = questions[this.currentIndex];
+                const userVal = document.getElementById('user-input').value.trim().toLowerCase().replace(/[.,]$/, "");
+                const correctVal = q.answer.trim().toLowerCase().replace(/[.,]$/, "");
+
+                const feedbackEl = document.getElementById('feedback');
+                feedbackEl.classList.remove('hidden');
+                document.getElementById('user-input').disabled = true;
+
+                // Simple check (could be improved with regex for better flexibility)
+                if (userVal === correctVal) {
+                    this.score += 10;
+                    this.correct++;
+                    feedbackEl.innerHTML = "🎉 Correct! Great job!";
+                    feedbackEl.className = "text-center font-bold text-lg mb-4 feedback-correct";
+                    this.triggerWinEffect();
+                } else {
+                    this.wrong++;
+                    feedbackEl.innerHTML = "⚡ Try again! Xem giải thích bên dưới nhé.";
+                    feedbackEl.className = "text-center font-bold text-lg mb-4 feedback-wrong";
+                }
+
+                document.getElementById('score').innerText = this.score;
+                this.showExplanation(q);
+                
+                document.getElementById('check-btn').classList.add('hidden');
+                document.getElementById('next-btn').classList.remove('hidden');
+            },
+
+            showExplanation(q) {
+                const card = document.getElementById('explanation-card');
+                const content = document.getElementById('explanation-content');
+                card.classList.remove('hidden');
+
+                let html = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100">
+                            <h4 class="font-bold text-blue-600 mb-2">1. Phân tích câu gốc</h4>
+                            <p class="text-sm"><span class="font-semibold">Thì:</span> ${q.explanation.analysis.tense || 'N/A'}</p>
+                            <p class="text-sm"><span class="font-semibold">Loại:</span> ${q.explanation.analysis.type}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-pink-100">
+                            <h4 class="font-bold text-pink-600 mb-2">2. Cấu trúc ngữ pháp</h4>
+                            <code class="block bg-gray-100 p-2 rounded text-pink-700 font-mono text-sm">${q.explanation.structure}</code>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">3. Quy trình chuyển đổi</h4>
+                        <div class="space-y-2">
+                            ${q.explanation.steps.map((step, i) => `
+                                <div class="flex items-start">
+                                    <span class="step-badge">BướC ${i+1}</span>
+                                    <p class="text-sm">${step}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg mr-2">💡</span>
+                            <h4 class="font-bold text-yellow-800">Mẹo nhanh</h4>
+                        </div>
+                        <p class="text-sm italic">${q.explanation.tip || "Hãy chú ý sự thay đổi của động từ khi chuyển cấu trúc."}</p>
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <p class="text-sm font-bold text-gray-400 uppercase mb-2">Đáp án chuẩn:</p>
+                        <p class="text-lg font-bold text-green-600 underline">${q.answer}</p>
+                    </div>
+                `;
+
+                content.innerHTML = html;
+            },
+
+            nextQuestion() {
+                this.currentIndex++;
+                if (this.currentIndex < questions.length) {
+                    this.loadQuestion();
+                } else {
+                    this.showResults();
+                }
+            },
+
+            showResults() {
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+
+                document.getElementById('final-score').innerText = `${this.correct}/${questions.length}`;
+                document.getElementById('correct-count').innerText = this.correct;
+                document.getElementById('wrong-count').innerText = this.wrong;
+
+                const msg = document.getElementById('result-message');
+                const tips = document.getElementById('review-tips');
+                let tipsHtml = "";
+
+                if (this.correct === questions.length) {
+                    msg.innerText = "Tuyệt vời! Bạn là một Grammar Master thực thụ!";
+                    tipsHtml = "<li>Duy trì phong độ và thử sức với các cấu trúc khó hơn như Đảo ngữ nhé!</li>";
+                } else if (this.correct > questions.length / 2) {
+                    msg.innerText = "Khá tốt! Bạn đã nắm được nền tảng, chỉ cần cẩn thận hơn một chút.";
+                    tipsHtml = "<li>Chú ý lỗi bỏ 'd' trong 'didn't use to'.</li><li>Ôn tập kỹ cách biến đổi Clause sang Noun Phrase.</li>";
+                } else {
+                    msg.innerText = "Đừng nản lòng! Ngữ pháp cần thời gian để làm quen.";
+                    tipsHtml = "<li>Học thuộc các bước chuyển đổi Step-by-Step.</li><li>Luyện tập viết các câu ví dụ đơn giản với 'Used to' mỗi ngày.</li>";
+                }
+                tips.innerHTML = tipsHtml;
+            },
+
+            triggerWinEffect() {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#3b82f6', '#ec4899', '#ffffff']
+                });
+            }
+        };
+
+        // Listen for Enter key
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const checkBtn = document.getElementById('check-btn');
+                const nextBtn = document.getElementById('next-btn');
+                if (!checkBtn.classList.contains('hidden')) {
+                    game.checkAnswer();
+                } else if (!nextBtn.classList.contains('hidden')) {
+                    game.nextQuestion();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
